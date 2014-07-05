@@ -7,6 +7,9 @@ import github.com.hayataka.beanscopytest.copy.BeansCopy;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Hello world!
  *
@@ -15,8 +18,11 @@ public class App
 {
 	private static final int MAX_LENGTH = 1000000;
 	
+	private static final Logger log = LogManager.getLogger(App.class);
+	
 	public static void main(String[] args) {
 
+		log.info("てすと {0}/{1}", "a","2");
 
 	    // NG全て同一インスタンス
 //	    Arrays.fill(bb, new ClassB());
