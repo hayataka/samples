@@ -11,8 +11,8 @@ public class BeansCopy {
 		try {
 			BeanUtils.copyProperties(dest, src);
 		} catch (IllegalAccessException | InvocationTargetException e) {
-		
 			e.printStackTrace();
+			throw new RuntimeException("beansCopy中にエラーが発生しました",e);
 		}
 		return dest;
 	}
@@ -26,6 +26,7 @@ public class BeansCopy {
 			}
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			e.printStackTrace();
+			throw new RuntimeException("beansCopy中にエラーが発生しました",e);
 		}
 	}
 
