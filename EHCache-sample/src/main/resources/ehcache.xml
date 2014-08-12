@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache>
+
+	<diskStore path="java.io.tmpdir" />
+
+	<!-- defaultCacheとは、キャッシュタグで指定されていない -->
+	<defaultCache maxElementsInMemory="100" eternal="false"
+		overflowToDisk="true" timeToIdleSeconds="1200" timeToLiveSeconds="1200">
+		<cacheEventListenerFactory class="jp.co.haya.CustomEhCacheEventListnerFactory" />
+	</defaultCache>
+
+	<cache name="sampleCache1" maxElementsInMemory="10000"
+		eternal="false" overflowToDisk="true"
+		 timeToIdleSeconds="10" timeToLiveSeconds="10"
+		memoryStoreEvictionPolicy="LFU">
+		<cacheEventListenerFactory class="jp.co.haya.CustomEhCacheEventListnerFactory" />
+	</cache>
+</ehcache>
