@@ -1,0 +1,76 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<!-- https://blog.openshift.com/how-to-build-java-websocket-applications-using-the-jsr-356-api/ -->
+	<!-- http://www.oracle.com/technetwork/articles/java/jsr356-1937161.html -->
+	<!-- http://www.w3.org/TR/2011/WD-websockets-20110419/ -->
+	<!-- https://tyrus.java.net/ -->
+	<parent>
+		<groupId>com.github.hayataka</groupId>
+		<artifactId>parentPom</artifactId>
+		<version>1.0.0</version>
+	</parent>
+	<artifactId>tetrisWebSocket</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>tetrisWebSocket</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<version.tyrus>1.10</version.tyrus>
+	</properties>
+
+
+	<dependencies>
+
+		<!-- websocket API -->
+		<dependency>
+			<groupId>javax.websocket</groupId>
+			<artifactId>javax.websocket-api</artifactId>
+			<version>1.0</version>
+		</dependency>
+
+		<!-- websocket API implementation -->
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-server</artifactId>
+			<version>${version.tyrus}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-client</artifactId>
+			<version>${version.tyrus}</version>
+		</dependency>
+		<!-- grizzly-framework -->
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-container-grizzly-server</artifactId>
+			<version>${version.tyrus}</version>
+		</dependency>
+
+		<!-- junit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+
+	</dependencies>
+
+
+	<build>
+		<plugins>
+			<plugin>
+				<!-- javaのバージョンは1.8 -->
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
