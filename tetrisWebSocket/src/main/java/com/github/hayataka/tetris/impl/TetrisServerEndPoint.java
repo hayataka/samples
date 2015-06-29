@@ -1,4 +1,4 @@
-package com.github.hayataka.tetris;
+package com.github.hayataka.tetris.impl;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,9 +16,9 @@ import javax.websocket.server.ServerEndpoint;
 
 import org.glassfish.tyrus.core.TyrusSession;
 
-import com.github.hayataka.tetris.Constants.Tags;
+import com.github.hayataka.tetris.impl.Settings.Tags;
 
-import static com.github.hayataka.tetris.Constants.Tetris.value;
+import static com.github.hayataka.tetris.impl.Settings.WebSocket.value;
 
 /**
  * messageDataFormat: command:text. commandList
