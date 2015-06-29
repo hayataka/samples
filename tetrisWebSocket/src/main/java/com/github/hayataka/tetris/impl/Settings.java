@@ -1,13 +1,23 @@
-package com.github.hayataka.tetris;
+package com.github.hayataka.tetris.impl;
 
-public class Constants {
-	public class Tetris {
-		public static final String hostName = "localhost";
-		public static final int port= 8120;
+public class Settings {
+
+	public class ServerCommon {
+		public static final String hostName = "localhost";		
+	}
+	
+	public class Http {
+		public static final String docRoot = "./webContent";
+		public static final int httpPort = 8080;
+	}
+	
+	public class WebSocket {
+
+		public static final int webSocketPort= 8120;
 		public static final String contextPath="/tetris";
 		public static final String value="/game";
 		/** webSocketServerの起動情報.**/
-		public static final String uri = "ws://" + hostName + ":" + port + contextPath + value;
+		public static final String uri = "ws://" + ServerCommon.hostName + ":" + webSocketPort + contextPath + value;
 	}
 
 	public class Tags {
