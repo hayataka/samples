@@ -1,8 +1,7 @@
-/**
- * 
- */
-$(function() {
-	console.debug("ready");
+/// <reference path="../libs/lz-string.js" />
+/// <reference path="../../typings/jquery/jquery.d.ts" />
+/// <reference path="../libs/underscore-1.8.3.js" />
+function preparePad(id, rivalId) {
 
 	var width = 12; // 全体の横幅(セル数）) + あたり判定用+２(左右）)
 	var height = 21; // 全体の高さ(セル数）)+ あたり判定用+１
@@ -10,7 +9,7 @@ $(function() {
 	var speed = 30;
 	var fills = {}; // もう、埋まっている場所のことを指す
 
-	var table = [ '<table>' ];
+	var table = [ '<table class="gamePad">' ];
 	for (var y = 0; y < height; y++) {
 
 		table.push('<tr>');
@@ -28,9 +27,15 @@ $(function() {
 	}
 	table.push('</table>');
 
-	document.getElementById('view').innerHTML = table.join('');
-	
-	
+	var padData = table.join('')
+	$(id).html(padData);
+	$(rivalId).html(padData);
+}
+
+$(function() {
+
+	console.debug("ready");	
+	preparePad('#view', '#rivalView');
 });
 
 

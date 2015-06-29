@@ -7,8 +7,8 @@
 
 <script type="text/javascript" src="./libs/lz-string.js"></script>
 
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script type="text/javascript" src="./libs/jquery-2.1.4.js"></script>
 <script type="text/javascript" src="./libs/underscore-1.8.3.js"></script>
 <script type="text/javascript" src="./js/tetris.js"></script>
 <title>websocket tetris</title>
@@ -17,7 +17,15 @@
 
 	<div id="explain">キーボードの上、左、右で対応</div>
 	<div id="info"></div>
-	<div id="view"></div>
+
+	<div id="playerPanel" class="players">
+		<div id="view"></div>
+	</div>
+
+	<div id="rivalPanel" class="players">
+		<div id="rivalView"></div>
+	</div>
+
 
 </body>
 </html>
