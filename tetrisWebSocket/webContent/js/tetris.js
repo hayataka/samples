@@ -1,6 +1,61 @@
 /// <reference path="../libs/lz-string.js" />
 /// <reference path="../../typings/jquery/jquery.d.ts" />
-/// <reference path="../libs/underscore-1.8.3.js" />
+/// <reference path="../../typings/underscore/underscore-1.7.0.d.ts" />
+
+// 探すならここが良さそう
+// https://github.com/borisyankov/DefinitelyTyped
+
+// 今のところは、１次元配列で、 左上から右に行って、端まで行ったら次の行（下）の左端というデータ構造
+// 後で二次元配列に変更するつもり
+
+
+$(function() {
+	
+	var width = 12; // 全体の横幅(セル数）) + あたり判定用+２(左右）)
+	var height = 21; // 全体の高さ(セル数）)+ あたり判定用+１
+	var lastRows = width * (height -1); 	
+	var z = _.range(0, width * height);
+
+	var tableFirst='<table class="gamePad">';
+	var rowStart = "<tr>";
+	var wall     = "<td style='background-color:silver'></td>";
+	var tdNormal = "<td></td>";
+	var rowEnd   = "</tr>";
+	var tableLast ='</table>';
+
+	var tpl ="<% if (leftWall) { %>" +
+				rowStart + wall + 
+             "<% } else if (rightWall) { %>" +
+						   wall + rowEnd +
+             "<% } else if (buttomWall) { %>" +
+			  			   wall +						   
+             "<% } else { %>" +
+				tdNormal +
+            "<% }%>";
+// TODO 本来ならばここで当たり判定ようにfillに入れていた。・・・
+// 色を塗ることと、当たり判定を一緒にできないのか？
+	var compiled = _.template(tpl);
+	var trData = _.map(z, function(num){
+		// 先に計算をしておいて、template時には結果のみ参照
+		var obj = {
+			pos: num
+			,leftWall: num % width == 0
+			,rightWall: num % width == width -1
+			,buttomWall: num >= lastRows
+		};
+		return compiled(obj);
+	});
+
+	trData.unshift(tableFirst);
+	trData.push(tableLast);
+	$('#view').html(trData.join(''));
+
+
+//				fills[x + y * width] = 'silver';
+
+
+})();
+
 function preparePad(id, rivalId) {
 
 	var width = 12; // 全体の横幅(セル数）) + あたり判定用+２(左右）)
@@ -13,7 +68,6 @@ function preparePad(id, rivalId) {
 	for (var y = 0; y < height; y++) {
 
 		table.push('<tr>');
-
 		for (var x = 0; x < width; x++) {
 			if (x == 0 || x == width - 1 || y == height - 1) {
 				table.push('<td style="background-color:silver"></td>');
@@ -28,8 +82,8 @@ function preparePad(id, rivalId) {
 	table.push('</table>');
 
 	var padData = table.join('')
-	$(id).html(padData);
-	$(rivalId).html(padData);
+//	$(id).html(padData);
+//	$(rivalId).html(padData);
 }
 
 $(function() {
