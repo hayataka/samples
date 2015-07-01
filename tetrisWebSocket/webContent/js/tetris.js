@@ -204,6 +204,10 @@ tetris.game = function() {
 							tetris.game.update();
 
 							// このひとかたまりを後で関数にする。
+							nows =[];
+							for (var i = -1; i < parts.length; i++) {
+								nows[top * width + left + offset] = 'black';
+							}
 							if (tetris.websocket.can()) {
 								var sendData = tetris.game.makeSendData();				
 								tetris.websocket.sendMessage("info:" + sendData);
