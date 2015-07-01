@@ -25,22 +25,18 @@ var viewAction = function() {
 			var test = LZString.decompressFromEncodedURIComponent(datas);
 			console.log(test);
 		},
-		close : function() {
-			console.log("closeしたよ");
+		close : function(event) {
+			var miliSecond = tetris.config.reConnect() * 1000;
+			console.log("closeしたよ,code:" + event.code);
+			// なんか変な挙動した。１回失敗して２回目接続試行で、失敗するはずなのにonOpenが呼ばれてた
+			// console.log(miliSecond + "後に再接続を試行します");
+		    // setTimeout("viewAction.socketOpen()", miliSecond);
 		},
 		error : function() {
 			tetris.websocket.cannotConnect();
 		}
 	};
 }();
-
-		
-//	function onMessage(event) {
-//		console.log("受信しました");
-
-		
-		
-
 
 
 /**
@@ -51,9 +47,23 @@ var viewAction = function() {
 	// 初期描画として行うこと
 	// 盤面を設定に応じて作る
 	var padData = tetris.game.preparePad();
-	$('#view').html(padData);
-	$('#rivalView').html(padData);
+	$('#playerGame').html(padData);
+	$('#rivalGame').html(padData);
 
+	// keyboardで操作できるように突っ込んでおく
+	tetris.game.keyboardEvent();
+
+	$('#gameStart').click(function() {
+		tetris.game.gameInitial();
+	});
+
+
+
+	// webSocket接続試行.
 	tetris.websocket.open(viewAction.socketOpen,viewAction.retrieve, viewAction.close, viewAction.error);
-
+	
+	
+	
+	
+	
 });

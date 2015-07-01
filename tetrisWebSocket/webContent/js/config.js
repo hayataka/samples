@@ -13,6 +13,7 @@ tetris.config = function() {
     var height = 21;            // 全体の高さ(セル数）) + あたり判定用+１(下)
 	var moveSpeed = 300;        // 画面再描画速度(ミリ秒）)
 	var speed = 30;             // 
+    var reConnectSecond=30;     // webSocket再接続試行までの待機秒数
 
     return {
         /**
@@ -35,7 +36,53 @@ tetris.config = function() {
         },
         s: function() {
             return speed;
+        },
+        interval: function() {
+            return moveSpeed / speed;
+        },
+        reConnect: function() {
+            return reConnectSecond;
+        },
+        blocks: function() {
+            var w = width;            
+            var bks = [
+					{
+						color : 'cyan',
+						angles : [ [ -1, 1, 2 ], [ -w, w, w + w ], [ -2, -1, 1 ],
+								[ -w - w, -w, w ] ]
+					},
+					{
+						color : 'yellow',
+						angles : [ [ -w - 1, -w, -1 ] ]
+					},
+					{
+						color : 'green',
+						angles : [ [ -w, 1 - w, -1 ], [ -w, 1, w + 1 ],
+								[ 1, w - 1, w ], [ -w - 1, -1, w ] ]
+					},
+					{
+						color : 'red',
+						angles : [ [ -w - 1, -w, 1 ], [ 1 - w, 1, w ],
+								[ -1, w, w + 1 ], [ -w, -1, w - 1 ] ]
+					},
+					{
+						color : 'blue',
+						angles : [ [ -w - 1, -1, 1 ], [ -w, 1 - w, w ],
+								[ -1, 1, w + 1 ], [ -w, w - 1, w ] ]
+					},
+					{
+						color : 'orange',
+						angles : [ [ 1 - w, -1, 1 ], [ -w, w, w + 1 ],
+								[ -1, 1, w - 1 ], [ -w - 1, -w, w ] ]
+					},
+					{
+						color : 'magenta',
+						angles : [ [ -w, -1, 1 ], [ -w, 1, w ], [ -1, 1, w ],
+								[ -w, -1, w ] ]
+					} ];
+            return bks;
         }
+        
     };
 }();
 
