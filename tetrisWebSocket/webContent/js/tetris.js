@@ -36,23 +36,47 @@ tetris.game = function() {
 	var speed = tetris.config.s();
 	var blocks = tetris.config.blocks();
 	var fills = [];
-
-	return {
-
-	
 		/**
-		 * ゲーム盤面となるtrタグ、tdタグの文字列情報を返却する.
-		 * ゲーム開始ボタンを押す前までに、事前状況を作っておく
-		 * @return tr や tdタグを、configで設定した分の文字列情報
-		 */	   
-		preparePad: function() {
-
+		 * fills[]に当たり判定のための壁を作る
+		 */
+	var	prepareMemory = function() {
 			var width = tetris.config.w();
 			var height = tetris.config.h();
 
 			// 定数から動的算出系統
 			var lastRows = width * (height -1); 	
 			var z = _.range(0, width * height);	// このデータ構造（１次元配列）の数だけ生成
+			// 条件分岐付きテンプレート		
+			var tpl ="<% if (wall) { %>" +
+							"silver" +
+		             "<% } else { %>" +
+							"" +
+		            "<% }%>";
+			var compiled = _.template(tpl);
+			// config定義分、テンプレートに食わせて文字列を作成
+			var memory = _.map(z, function(num,index){
+				// 先に計算をしておいて、template時には結果のみ参照
+				var obj = {
+					 wall: index % width == 0 || index % width == width -1 || index >= lastRows
+				};
+				return compiled(obj);
+			});
+			fills = memory;
+			return memory;
+		};
+
+	return {
+		/**
+		 * ゲーム盤面となるtrタグ、tdタグの文字列情報を返却する.
+		 * ゲーム開始ボタンを押す前までに、事前状況を作っておく
+		 * @return tr や tdタグを、configで設定した分の文字列情報
+		 */	   
+		preparePad: function() {
+			var data = prepareMemory();
+
+			var width = tetris.config.w();
+			var height = tetris.config.h();
+			var lastRows = width * (height -1); 	
 
 			// テンプレート		
 			var rowStart = "<tr>";
@@ -70,22 +94,16 @@ tetris.game = function() {
 		             "<% } else { %>" +
 									tdNormal +
 		            "<% }%>";
-		// TODO 本来ならばここで当たり判定ようにfillに入れていた。・・・
-		// 色を塗ることと、当たり判定を一緒にできないのか？
-		//	fills[x + y * width] = 'silver';		
-
-// 結局、fillsを最初に作って、それに合わせて tdとか作るように変えればいいんじゃないかな？
-
 			var compiled = _.template(tpl);
 
 			// config定義分、テンプレートに食わせて文字列を作成
-			var trData = _.map(z, function(num){
+			var trData = _.map(data, function(num,index){
 				// 先に計算をしておいて、template時には結果のみ参照
 				var obj = {
 					pos: num
-					,leftWall: num % width == 0
-					,rightWall: num % width == width -1
-					,buttomWall: num >= lastRows
+					,leftWall: index % width == 0
+					,rightWall: index % width == width -1
+					,buttomWall: index >= lastRows
 				};
 				return compiled(obj);
 			});
@@ -118,8 +136,6 @@ tetris.game = function() {
 			};
 		},
 
-
-
 		/**
 		 * げーむすたーとボタンを押した後に、最初に動く挙動を定義する.
 		 */
@@ -129,7 +145,6 @@ tetris.game = function() {
 			setTimeout(tetris.game.move, tetris.config.interval());			
 		},
 		move: function() {
-//			alert("move::::");
 			tick++;
 			leftBefore = left;
 			topBefore = top;

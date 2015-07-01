@@ -26,7 +26,7 @@ var viewAction = function() {
 			console.log(test);
 		},
 		close : function(event) {
-			var miliSecond = tetris.config.reConnect() * 1000;
+			//var miliSecond = tetris.config.reConnect() * 1000;
 			console.log("closeしたよ,code:" + event.code);
 			// なんか変な挙動した。１回失敗して２回目接続試行で、失敗するはずなのにonOpenが呼ばれてた
 			// console.log(miliSecond + "後に再接続を試行します");
@@ -34,6 +34,16 @@ var viewAction = function() {
 		},
 		error : function() {
 			tetris.websocket.cannotConnect();
+		},
+		/**
+		 * fills配列に入っている状態を盤面に反映する
+		 */
+		memoryToBrowser(fills) {
+			
+
+			
+			
+			
 		}
 	};
 }();
@@ -43,7 +53,7 @@ var viewAction = function() {
  * 初期描画時に行うことを設定する
  */ 
  $(function() {
-	 
+
 	// 初期描画として行うこと
 	// 盤面を設定に応じて作る
 	var padData = tetris.game.preparePad();
