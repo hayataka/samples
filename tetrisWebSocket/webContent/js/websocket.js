@@ -44,6 +44,9 @@ tetris.websocket = function() {
 			webSocket.onmessage = onMessage;
 			webSocket.onclose = onClose;
 			webSocket.onerror = onError;
+		},
+		sendMessage: function(message) {
+			webSocket.send(message);
 		}
 		
     };

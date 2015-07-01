@@ -13,17 +13,35 @@
 
 var viewAction = function() {
 
+	var rivalCells = {};
+
 	return {
 		socketOpen : function() {
+
 			console.log("openしたよー");
 		},
+		setRivalCells : function(cells) {
+			rivalCells = cells;
+		},
+		
 		retrieve : function(event) {
-			console.log("messageを受け取ったよ");
+			//console.log("messageを受け取ったよ");
 			var flgs = event.data.split(":");
-			var commdand = flgs[0];
+			var command = flgs[0];
 			var datas = flgs[1];
-			var test = LZString.decompressFromEncodedURIComponent(datas);
-			console.log(test);
+			var dataString = LZString.decompressFromEncodedURIComponent(datas);
+			// console.log(test);
+			if (command=="info") {
+				//data 形式
+				//"{"0":"silver","1":"","2":"","3":"",「中略」,"250":"silver","251":"silver"}"
+				var obj = JSON.parse(dataString);
+				for (var i = 0; i< rivalCells.length; i++) {
+					rivalCells[i].style.backgroundColor = obj[i];
+				}
+
+			}
+
+
 		},
 		close : function(event) {
 			//var miliSecond = tetris.config.reConnect() * 1000;
@@ -68,6 +86,7 @@ var viewAction = function() {
 	});
 
 
+	viewAction.setRivalCells($('#rivalGame td'));
 
 	// webSocket接続試行.
 	tetris.websocket.open(viewAction.socketOpen,viewAction.retrieve, viewAction.close, viewAction.error);

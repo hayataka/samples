@@ -35,7 +35,9 @@ tetris.game = function() {
 	var tick = 0;
 	var speed = tetris.config.s();
 	var blocks = tetris.config.blocks();
-	var fills = [];
+	var fills = []; 		// 確定済みの、もう動か無いブロック類が保持されている変数
+	var nows = [];          // まだ操作中の、まだ動かせるブロック類が保持されている変数
+	
 
 // fills の概念が、「もう確定していて動かない項目」と定義しているのに対して、今操作中
 // オブジェクトを混ぜてしまうと、　自分自身とぶつかって動けなくなってしまうので
@@ -200,7 +202,12 @@ tetris.game = function() {
 								}
 							}
 							tetris.game.update();
-//TODO 最後に送信する
+
+							// このひとかたまりを後で関数にする。
+							if (tetris.websocket.can()) {
+								var sendData = tetris.game.makeSendData();				
+								tetris.websocket.sendMessage("info:" + sendData);
+							}
 							return;
 						}
 	
@@ -235,17 +242,15 @@ tetris.game = function() {
 								}
 	
 							}
-							tetris.game.update();
+							tetris.game.update();	//これ、なくても良いかも？
 						}
 	
 						//　次のblockを出現させ、上から落とす
-						block = blocks[Math
-								.floor(Math.random() * blocks.length)];
+						block = blocks[Math.floor(Math.random() * blocks.length)];
 						leftBefore = left = Math.floor(width / 2);
 						topBefore = top = 2;
 						angleBefore = angle = 0;
-						partsBefore = parts = block.angles[angle
-								% block.angles.length];
+						partsBefore = parts = block.angles[angle % block.angles.length];
 						scoreBefore = score;
 					} else {
 						//次のイベントタイミングまで保留
@@ -263,53 +268,83 @@ tetris.game = function() {
 			if (top != topBefore) {
 				score++;
 			}
-	
+
+
+			// ローカル画面の再描画　
+			// TODO ここだけで良いのでは？
+			tetris.game.update();
+
+
+			//一個前の高さのを消して	
 			for (var i = -1; i < partsBefore.length; i++) {
-				var offset = partsBefore[i] || 0;
+				offset = partsBefore[i] || 0;
 				cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
 			}
-			partsBefore = parts;
-	
-			for (var i = -1; i < partsBefore.length; i++) {
-				var offset = partsBefore[i] || 0;
+
+//TODO ここだけどうにかでき無いかなぁ。　fillsには入れられ無いけれども、
+			//今の高さのに色を設定する
+			nows = []; //初期化し直し
+			for (var i = -1; i < parts.length; i++) {
+				offset = parts[i] || 0;
 				cells[top * width + left + offset].style.backgroundColor = block.color;
+				nows[top * width + left + offset] = block.color;
 			}
+			
+			partsBefore = parts;			
+			
 	
 			var info = 'プログラム内の経過：' + tick + '(' + left + ',' + top
 					+ ' score: ' + score + ')';
 			document.getElementById('info').innerHTML = info;
 	
-			var sendTemp = [];
-			for (var i = 0; i < cells.length; i++) {
-				sendTemp[i] = cells[i].style.backgroundColor;
-			}
+			// var sendTemp = [];
+			// for (var i = 0; i < cells.length; i++) {
+			// 	sendTemp[i] = cells[i].style.backgroundColor;
+			// }
 	
 			//			webSocket.send(JSON.stringify(sendTemp));
 			/* 			alert("befadata:" +                   JSON.stringify(sendTemp).length);
 			 alert("befadata:" + LZString.compressToEncodedURIComponent(JSON.stringify(sendTemp)).length); */
 			//   5分の１程度
 	
-			// webSocket.send("info:"
-			// 		+ LZString.compressToEncodedURIComponent(JSON
-			// 				.stringify(sendTemp)));
 
 
-			
-// TODO 最後にアクティベート			
+
+			if (tetris.websocket.can()) {
+				var sendData = tetris.game.makeSendData();				
+				tetris.websocket.sendMessage("info:" + sendData);
+			}
+
+
 			setTimeout(tetris.game.move, tetris.config.interval());
 		},
 		update: function() {
-			
+			//確定物＝fills を使って、cellsの色を更新			
 			for(var i = 0; i < fills.length; i++) {
 				cells[i].style.backgroundColor=fills[i];
 			}
+		},
+		makeSendData: function() {
 			
-			
+			// fills及びnowsの情報から、送信予定データを返却する
+			// deepCopy ・・・falseで、shallowCopyでもいい気がする			
+			var copyData = jQuery.extend(true, {}, fills);
+			for (var i = 0;i < nows.length;i++) {
+				if (nows[i]) {
+					copyData[i] = nows[i];
+				}
+			}
+			var jsonData = JSON.stringify(copyData);
+			console.log("圧縮前：" + jsonData.length);
+
+			var sendData = LZString.compressToEncodedURIComponent(jsonData);
+			console.log("圧縮後：" + sendData.length);	
+			return sendData;
 		}
     };
 }();
 
-
+			//			webSocket.send(JSON.stringify(sendTemp));
 
 
 //window.onload = function() {
