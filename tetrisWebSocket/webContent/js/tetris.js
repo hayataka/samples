@@ -36,6 +36,11 @@ tetris.game = function() {
 	var speed = tetris.config.s();
 	var blocks = tetris.config.blocks();
 	var fills = [];
+
+// fills の概念が、「もう確定していて動かない項目」と定義しているのに対して、今操作中
+// オブジェクトを混ぜてしまうと、　自分自身とぶつかって動けなくなってしまうので
+// fillsで全てを解決でき無い
+
 		/**
 		 * fills[]に当たり判定のための壁を作る
 		 */
@@ -188,13 +193,14 @@ tetris.game = function() {
 							offset = partsBefore[j] || 0;
 							fills[topBefore * width + leftBefore + offset] = block.color;
 						}
-	
 						if (scoreBefore == score) {
 							for ( var d in fills) {
 								if (fills[d]) {
-									cells[d].style.backgroundColor = 'black';
+									fills[d] = 'black';
 								}
 							}
+							tetris.game.update();
+//TODO 最後に送信する
 							return;
 						}
 	
@@ -211,10 +217,8 @@ tetris.game = function() {
 							if (filled) {
 								for (var y2 = y; y2 >= 0; y2--) {
 									for (var x = 1; x < width - 1; x++) {
-										fills[y2 * width + x] = fills[(y2 - 1)
-												* width + x];
+										fills[y2 * width + x] = fills[(y2 - 1) * width + x];
 									}
-	
 								}
 								y++;
 								cleans++;
@@ -227,11 +231,11 @@ tetris.game = function() {
 							for (var y = height - 2; y >= 0; y--) {
 								for (var x = 1; x < width - 1; x++) {
 									var color = fills[y * width + x] || '';
-									cells[y * width + x].style.backgroundColor = color;
+									fills[y * width + x] = color;
 								}
 	
 							}
-	
+							tetris.game.update();
 						}
 	
 						//　次のblockを出現させ、上から落とす
@@ -293,6 +297,14 @@ tetris.game = function() {
 			
 // TODO 最後にアクティベート			
 			setTimeout(tetris.game.move, tetris.config.interval());
+		},
+		update: function() {
+			
+			for(var i = 0; i < fills.length; i++) {
+				cells[i].style.backgroundColor=fills[i];
+			}
+			
+			
 		}
     };
 }();

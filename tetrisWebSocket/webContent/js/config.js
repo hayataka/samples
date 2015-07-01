@@ -12,7 +12,7 @@ tetris.config = function() {
     var width = 12;             // 全体の横幅(セル数）) + あたり判定用+２(左右）)
     var height = 21;            // 全体の高さ(セル数）) + あたり判定用+１(下)
 	var moveSpeed = 300;        // 画面再描画速度(ミリ秒）)
-	var speed = 30;             // 
+	var speed = 30;             // 縦に１セル動くまでに、何回move関数を呼ぶかを指定する。
     var reConnectSecond=30;     // webSocket再接続試行までの待機秒数
 
     return {
