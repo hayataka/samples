@@ -1,150 +1,81 @@
 /// <reference path="../libs/lz-string.js" />
 /// <reference path="../../typings/jquery/jquery.d.ts" />
 /// <reference path="../../typings/underscore/underscore-1.7.0.d.ts" />
-
-// 探すならここが良さそう
+/// <reference path="config.js" />
+/// <reference path="websocket.js" />
+// typeScriptについては探すならここが良さそう
 // https://github.com/borisyankov/DefinitelyTyped
 
 // 今のところは、１次元配列で、 左上から右に行って、端まで行ったら次の行（下）の左端というデータ構造
 // 後で二次元配列に変更するつもり
 
-
-$(function() {
+/**
+ * configがメインで作成
+ */
+var tetris = tetris || {};
+tetris.game = function() {
+	return {
 	
-	var width = 12; // 全体の横幅(セル数）) + あたり判定用+２(左右）)
-	var height = 21; // 全体の高さ(セル数）)+ あたり判定用+１
-	var lastRows = width * (height -1); 	
-	var z = _.range(0, width * height);
+		/**
+		 * ゲーム盤面となるtrタグ、tdタグの文字列情報を返却する.
+		 * @return tr や tdタグを、configで設定した分の文字列情報
+		 */	   
+		preparePad: function() {
 
-	var tableFirst='<table class="gamePad">';
-	var rowStart = "<tr>";
-	var wall     = "<td style='background-color:silver'></td>";
-	var tdNormal = "<td></td>";
-	var rowEnd   = "</tr>";
-	var tableLast ='</table>';
+			var width = tetris.config.w();
+			var height = tetris.config.h();
 
-	var tpl ="<% if (leftWall) { %>" +
-				rowStart + wall + 
-             "<% } else if (rightWall) { %>" +
-						   wall + rowEnd +
-             "<% } else if (buttomWall) { %>" +
-			  			   wall +						   
-             "<% } else { %>" +
-				tdNormal +
-            "<% }%>";
-// TODO 本来ならばここで当たり判定ようにfillに入れていた。・・・
-// 色を塗ることと、当たり判定を一緒にできないのか？
-	var compiled = _.template(tpl);
-	var trData = _.map(z, function(num){
-		// 先に計算をしておいて、template時には結果のみ参照
-		var obj = {
-			pos: num
-			,leftWall: num % width == 0
-			,rightWall: num % width == width -1
-			,buttomWall: num >= lastRows
-		};
-		return compiled(obj);
-	});
+			// 定数から動的算出系統
+			var lastRows = width * (height -1); 	
+			var z = _.range(0, width * height);	// このデータ構造（１次元配列）の数だけ生成
 
-	trData.unshift(tableFirst);
-	trData.push(tableLast);
-	$('#view').html(trData.join(''));
+			// テンプレート		
+			var tableFirst='<table class="gamePad">';
+			var rowStart = "<tr>";
+			var wall     = "<td style='background-color:silver'></td>";
+			var tdNormal = "<td></td>";
+			var rowEnd   = "</tr>";
+			var tableLast ='</table>';
 
+			// 条件分岐付きテンプレート		
+			var tpl ="<% if (leftWall) { %>" +
+						rowStart + wall + 
+		             "<% } else if (rightWall) { %>" +
+									wall + rowEnd +
+		             "<% } else if (buttomWall) { %>" +
+									wall +						   
+		             "<% } else { %>" +
+									tdNormal +
+		            "<% }%>";
+		// TODO 本来ならばここで当たり判定ようにfillに入れていた。・・・
+		// 色を塗ることと、当たり判定を一緒にできないのか？
+		//	fills[x + y * width] = 'silver';		
+			var compiled = _.template(tpl);
 
-//				fills[x + y * width] = 'silver';
+			// config定義分、テンプレートに食わせて文字列を作成
+			var trData = _.map(z, function(num){
+				// 先に計算をしておいて、template時には結果のみ参照
+				var obj = {
+					pos: num
+					,leftWall: num % width == 0
+					,rightWall: num % width == width -1
+					,buttomWall: num >= lastRows
+				};
+				return compiled(obj);
+			});
+			// TODO tableタグだけは先にhtml上に書いておいて、appendで後から追加できるんじゃ無いか？
+			trData.unshift(tableFirst);
+			trData.push(tableLast);
+			return trData.join('');
+        }
+		,
+    };
+}();
 
-
-})();
-
-function preparePad(id, rivalId) {
-
-	var width = 12; // 全体の横幅(セル数）) + あたり判定用+２(左右）)
-	var height = 21; // 全体の高さ(セル数）)+ あたり判定用+１
-	var moveSpeed = 300; // 画面再描画速度(ミリ秒）)
-	var speed = 30;
-	var fills = {}; // もう、埋まっている場所のことを指す
-
-	var table = [ '<table class="gamePad">' ];
-	for (var y = 0; y < height; y++) {
-
-		table.push('<tr>');
-		for (var x = 0; x < width; x++) {
-			if (x == 0 || x == width - 1 || y == height - 1) {
-				table.push('<td style="background-color:silver"></td>');
-				fills[x + y * width] = 'silver';
-			} else {
-				table.push('<td></td>');
-			}
-
-		}
-		table.push('</tr>');
-	}
-	table.push('</table>');
-
-	var padData = table.join('')
-//	$(id).html(padData);
-//	$(rivalId).html(padData);
-}
-
-$(function() {
-
-	console.debug("ready");	
-	preparePad('#view', '#rivalView');
-});
 
 
 
 //window.onload = function() {
-//	// 接続先URI
-//	var uri = "ws://localhost:8120/tetris/game";
-//
-//	// WebSocketオブジェクト
-//	var webSocket = null;
-//
-//	// 接続
-//	function open() {
-//		if (webSocket == null) {
-//			// WebSocket の初期化
-//			webSocket = new WebSocket(uri);
-//			// イベントハンドラの設定
-//			webSocket.onopen = onOpen;
-//			webSocket.onmessage = onMessage;
-//			webSocket.onclose = onClose;
-//			webSocket.onerror = onError;
-//		}
-//	}
-//
-//	// 接続イベント
-//	function onOpen(event) {
-//		console.log("接続しました");
-//	}
-//
-//	// メッセージ受信イベント
-//	function onMessage(event) {
-//		console.log("受信しました");
-//		var flgs = event.data.split(":");
-//		var commdand = flgs[0];
-//		var datas = flgs[1];
-//		var test = LZString.decompressFromEncodedURIComponent(datas);
-//		//	        alert(test);
-//
-//	}
-//
-//	// エラーイベント
-//	function onError(event) {
-//		//chat("エラーが発生しました。");
-//	}
-//
-//	// 切断イベント
-//	function onClose(event) {
-//		/*         chat("切断しました。3秒後に再接続します。(" + event.code + ")");
-//		        webSocket = null;
-//		        setTimeout("open()", 3000); */
-//		console.log("切断した");
-//
-//	}
-//	open();
-//
 //
 //	var top = 2; //画面に最初に描画されたのが(２７０度変換された状態であっても）画面にテトリス要素がすべて表示されるようにするため)
 //	var topBefore = top //「1回前の」状態を保存する系統の変数
