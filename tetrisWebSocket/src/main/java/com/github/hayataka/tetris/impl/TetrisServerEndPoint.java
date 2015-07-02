@@ -105,8 +105,8 @@ public class TetrisServerEndPoint {
 		default:
 			logger.warning("未設定のコマンドです：" + command);
 		}
-
-		return message; // これは自分自身に対して返信するだけ
+		return null;
+//		return message; // これは自分自身に対して返信するだけ
 	}
 
 	void closeSession(Session session) {
