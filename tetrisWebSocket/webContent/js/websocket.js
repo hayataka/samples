@@ -8,7 +8,6 @@ var tetris = tetris || {};
  * Websocketとのやりとりを担当する箇所.
  */
 tetris.websocket = function() {
-	var uri = "ws://localhost:8120/tetris/game";
 	var canConnect = true;							// 初期値true 接続できなかったら一人用で動かすために保持
 	var webSocket = null;							// webSocketオブジェクト
     return {
@@ -36,6 +35,7 @@ tetris.websocket = function() {
 		 */
 		open: function(onOpen, onMessage, onClose, onError) {
 			// WebSocket の初期化
+			var uri = tetris.config.u();
 			webSocket = new WebSocket(uri);
 			// イベントハンドラの設定
 

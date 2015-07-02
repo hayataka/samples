@@ -35,17 +35,23 @@ tetris.game = function() {
 	var tick = 0;
 	var speed = tetris.config.s();
 	var blocks = tetris.config.blocks();
+
+	//今すでに埋まっているものが  fills[i] = 'yellow' のような形で設定している
 	var fills = []; 		// 確定済みの、もう動か無いブロック類が保持されている変数
+
+	// 操作中のもので、 nows[i] = 'yellow'のような形で設定している。 操作しているものは
+	// １blockなので、せいぜい４つ入っていて後はundefined扱いになっている
 	var nows = [];          // まだ操作中の、まだ動かせるブロック類が保持されている変数
 	
 
 // fills の概念が、「もう確定していて動かない項目」と定義しているのに対して、今操作中
 // オブジェクトを混ぜてしまうと、　自分自身とぶつかって動けなくなってしまうので
-// fillsで全てを解決でき無い
+// fillsで全てを解決でき無い →nowsを作った
 
-		/**
-		 * fills[]に当たり判定のための壁を作る
-		 */
+	/**
+	 * fills[]に当たり判定のための壁を作る
+	 * privateメソッドとして定義
+	 */
 	var	prepareMemory = function() {
 			var width = tetris.config.w();
 			var height = tetris.config.h();
@@ -72,6 +78,9 @@ tetris.game = function() {
 			return memory;
 		};
 
+	/**
+	 * publicメソッド.
+	 */
 	return {
 		/**
 		 * ゲーム盤面となるtrタグ、tdタグの文字列情報を返却する.
@@ -137,7 +146,7 @@ tetris.game = function() {
 					break;
 				default:
 					// keyboardで何を押されたのかを、consoleに出すことで後々変更できるようにしよう.
-					console.log(e.keyCode);
+					console.log('入力されたキー：' + e.keyCode);
 					break;
 				}
 			};
@@ -148,9 +157,13 @@ tetris.game = function() {
 		 */
 		gameInitial : function() {
 			block = blocks[Math.floor(Math.random() * blocks.length)];
+			// 操作しているユーザ側の 画面描画を実現するために、先に変数として格納。
 			cells = $('#playerGame td');
 			setTimeout(tetris.game.move, tetris.config.interval());			
 		},
+
+		//TODO move関数長すぎ、１６０行以上ある
+		
 		move: function() {
 			tick++;
 			leftBefore = left;
@@ -246,7 +259,6 @@ tetris.game = function() {
 								}
 	
 							}
-							tetris.game.update();	//これ、なくても良いかも？
 						}
 	
 						//　次のblockを出現させ、上から落とす
@@ -275,7 +287,6 @@ tetris.game = function() {
 
 
 			// ローカル画面の再描画　
-			// TODO ここだけで良いのでは？
 			tetris.game.update();
 
 
@@ -285,12 +296,12 @@ tetris.game = function() {
 				cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
 			}
 
-//TODO ここだけどうにかでき無いかなぁ。　fillsには入れられ無いけれども、
 			//今の高さのに色を設定する
 			nows = []; //初期化し直し
 			for (var i = -1; i < parts.length; i++) {
 				offset = parts[i] || 0;
 				cells[top * width + left + offset].style.backgroundColor = block.color;
+				// 相手への通信のために、今の場所を保持しておく
 				nows[top * width + left + offset] = block.color;
 			}
 			
@@ -301,29 +312,17 @@ tetris.game = function() {
 					+ ' score: ' + score + ')';
 			document.getElementById('info').innerHTML = info;
 	
-			// var sendTemp = [];
-			// for (var i = 0; i < cells.length; i++) {
-			// 	sendTemp[i] = cells[i].style.backgroundColor;
-			// }
-	
-			//			webSocket.send(JSON.stringify(sendTemp));
-			/* 			alert("befadata:" +                   JSON.stringify(sendTemp).length);
-			 alert("befadata:" + LZString.compressToEncodedURIComponent(JSON.stringify(sendTemp)).length); */
-			//   5分の１程度
-	
-
-
-
+			// 二人用で動いている時には、 相手に通知するために 送信する
 			if (tetris.websocket.can()) {
 				var sendData = tetris.game.makeSendData();				
 				tetris.websocket.sendMessage("info:" + sendData);
 			}
 
-
 			setTimeout(tetris.game.move, tetris.config.interval());
 		},
 		update: function() {
 			//確定物＝fills を使って、cellsの色を更新			
+			// 今動かしている最中の物については、move関数内で、cells及びnowsへ反映済み
 			for(var i = 0; i < fills.length; i++) {
 				cells[i].style.backgroundColor=fills[i];
 			}
@@ -334,250 +333,18 @@ tetris.game = function() {
 			// deepCopy ・・・falseで、shallowCopyでもいい気がする			
 			var copyData = jQuery.extend(true, {}, fills);
 			for (var i = 0;i < nows.length;i++) {
+				// TODO ここってわざわざ幅*高さ分だけ回しちゃっているけど、せいぜい４項目なんだからピンポイントアクセスできないのかなぁ
 				if (nows[i]) {
 					copyData[i] = nows[i];
 				}
 			}
 			var jsonData = JSON.stringify(copyData);
-			console.log("圧縮前：" + jsonData.length);
-
+			//console.log("圧縮前：" + jsonData.length);   2500程度だと
 			var sendData = LZString.compressToEncodedURIComponent(jsonData);
-			console.log("圧縮後：" + sendData.length);	
+			//console.log("圧縮後：" + sendData.length);	  800程度に圧縮していた
+			// TODO 通信容量もっと減らしたい。そもそも変わってい無い箇所も送り直しているのが無駄
 			return sendData;
 		}
     };
 }();
 
-			//			webSocket.send(JSON.stringify(sendTemp));
-
-
-//window.onload = function() {
-//
-//	var top = 2; //画面に最初に描画されたのが(２７０度変換された状態であっても）画面にテトリス要素がすべて表示されるようにするため)
-//	var topBefore = top //「1回前の」状態を保存する系統の変数
-//	var left = Math.floor(width / 2); //画面の真ん中に初期配置
-//	var leftBefore = left;
-//
-//	var w = width; //省略記述用。
-//	var angle = 0;
-//	var angleBefore = angle;
-//	var partsBefore = [];
-//	var score = 0;
-//	var scoreBefore = score;
-//
-//	var blocks = [
-//			{
-//				color : 'cyan',
-//				angles : [ [ -1, 1, 2 ], [ -w, w, w + w ], [ -2, -1, 1 ],
-//						[ -w - w, -w, w ] ]
-//			},
-//			{
-//				color : 'yellow',
-//				angles : [ [ -w - 1, -w, -1 ] ]
-//			},
-//			{
-//				color : 'green',
-//				angles : [ [ -w, 1 - w, -1 ], [ -w, 1, w + 1 ],
-//						[ 1, w - 1, w ], [ -w - 1, -1, w ] ]
-//			},
-//			{
-//				color : 'red',
-//				angles : [ [ -w - 1, -w, 1 ], [ 1 - w, 1, w ],
-//						[ -1, w, w + 1 ], [ -w, -1, w - 1 ] ]
-//			},
-//			{
-//				color : 'blue',
-//				angles : [ [ -w - 1, -1, 1 ], [ -w, 1 - w, w ],
-//						[ -1, 1, w + 1 ], [ -w, w - 1, w ] ]
-//			},
-//			{
-//				color : 'orange',
-//				angles : [ [ 1 - w, -1, 1 ], [ -w, w, w + 1 ],
-//						[ -1, 1, w - 1 ], [ -w - 1, -w, w ] ]
-//			},
-//			{
-//				color : 'magenta',
-//				angles : [ [ -w, -1, 1 ], [ -w, 1, w ], [ -1, 1, w ],
-//						[ -w, -1, w ] ]
-//			} ];
-//	var block = blocks[Math.floor(Math.random() * blocks.length)]
-//
-//	var keys = {};
-//	var cells = document.getElementsByTagName('td');
-//
-//	// キーボード入力を受け付ける
-//	document.onkeydown = function(e) {
-//		switch ((e || event).keyCode) {
-//		case 37: // キーボードの左キー
-//			keys.left = true;
-//			break;
-//		case 39: // キーボードの右キー
-//			keys.right = true;
-//			break;
-//		case 38: //キーボードの上キー
-//			keys.rotate = true;
-//			break;
-//		case 40:
-//			keys.down = true;
-//			break;
-//		/**
-//		default:
-//			console.log(e.keyCode);
-//			break;
-//		 **/
-//		}
-//
-//	}
-//
-//	var tick = 0;
-//	var move = function() {
-//
-//		tick++;
-//		leftBefore = left;
-//		topBefore = top;
-//		angleBefore = angle;
-//
-//		if (tick % speed == 0) {
-//			top++;
-//		} else {
-//			if (keys.left) {
-//				left--;
-//			}
-//			// 別イベント関数 onkeydownにて記録した情報を受け取る
-//			if (keys.right) {
-//				left++;
-//			}
-//
-//			if (keys.down) {
-//				top++;
-//			}
-//
-//			if (tick % speed == 0) {
-//				top++;
-//			}
-//
-//			if (keys.rotate) {
-//				angle++
-//			}
-//		}
-//
-//		keys = {}; // 初期化（次のイベントで拾えるようにする）
-//
-//		// 当たり判定処理
-//		var parts = block.angles[angle % block.angles.length];
-//		for (var i = -1; i < parts.length; i++) {
-//			var offset = parts[i] || 0;
-//			if (fills[top * width + left + offset]) {
-//
-//				if (tick % speed == 0) {
-//					for (var j = -1; j < partsBefore.length; j++) {
-//						var offset = partsBefore[j] || 0;
-//						fills[topBefore * width + leftBefore + offset] = block.color;
-//					}
-//
-//					if (scoreBefore == score) {
-//						for ( var i in fills) {
-//							if (fills[i]) {
-//								cells[i].style.backgroundColor = 'black';
-//							}
-//						}
-//						return;
-//					}
-//
-//					// 削除系処理
-//					var cleans = 0;
-//					for (var y = height - 2; y >= 0; y--) {
-//						var filled = true;
-//						for (var x = 1; x < width - 1; x++) {
-//							if (!fills[y * width + x]) {
-//								filled = false;
-//								break;
-//							}
-//						}
-//						if (filled) {
-//							for (var y2 = y; y2 >= 0; y2--) {
-//								for (var x = 1; x < width - 1; x++) {
-//									fills[y2 * width + x] = fills[(y2 - 1)
-//											* width + x];
-//								}
-//
-//							}
-//							y++;
-//							cleans++;
-//
-//						}
-//
-//					}
-//					if (cleans > 0) {
-//						score += Math.pow(10, cleans) * 10;
-//						for (var y = height - 2; y >= 0; y--) {
-//							for (var x = 1; x < width - 1; x++) {
-//								var color = fills[y * width + x] || '';
-//								cells[y * width + x].style.backgroundColor = color;
-//							}
-//
-//						}
-//
-//					}
-//
-//					//　次のblockを出現させ、上から落とす
-//					block = blocks[Math
-//							.floor(Math.random() * blocks.length)];
-//					leftBefore = left = Math.floor(width / 2);
-//					topBefore = top = 2;
-//					angleBefore = angle = 0;
-//					partsBefore = parts = block.angles[angle
-//							% block.angles.length];
-//					scoreBefore = score;
-//				} else {
-//					//次のイベントタイミングまで保留
-//					left = leftBefore;
-//					top = topBefore;
-//					angle = angleBefore;
-//					parts = partsBefore;
-//
-//				}
-//
-//				break; //　どこか１か所でもfills内にある＝あたり判定対象
-//			}
-//		}
-//
-//		if (top != topBefore) {
-//			score++;
-//		}
-//
-//		for (var i = -1; i < partsBefore.length; i++) {
-//			var offset = partsBefore[i] || 0;
-//			cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
-//		}
-//		partsBefore = parts;
-//
-//		for (var i = -1; i < partsBefore.length; i++) {
-//			var offset = partsBefore[i] || 0;
-//			cells[top * width + left + offset].style.backgroundColor = block.color;
-//		}
-//
-//		var info = 'プログラム内の経過：' + tick + '(' + left + ',' + top
-//				+ ' score: ' + score + ')';
-//		document.getElementById('info').innerHTML = info;
-//
-//		var sendTemp = [];
-//		for (var i = 0; i < cells.length; i++) {
-//			sendTemp[i] = cells[i].style.backgroundColor;
-//		}
-//
-//		//			webSocket.send(JSON.stringify(sendTemp));
-//		/* 			alert("befadata:" +                   JSON.stringify(sendTemp).length);
-//		 alert("befadata:" + LZString.compressToEncodedURIComponent(JSON.stringify(sendTemp)).length); */
-//		//   5分の１程度
-//
-//		webSocket.send("info:"
-//				+ LZString.compressToEncodedURIComponent(JSON
-//						.stringify(sendTemp)));
-//
-
-//	}
-//
-
-//	move();
-//}
