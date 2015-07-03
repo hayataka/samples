@@ -15,8 +15,7 @@ tetris.config = function() {
 	var speed = 30;             // 縦に１セル動くまでに、何回move関数を呼ぶかを指定する。
 
 	// websocket接続先URL
-	var uri = "ws://localhost:8120/tetris/game";
-
+	var uri = "ws://" + location.hostname + ":8120/tetris/game";
     // 現在未使用
 	var reConnectSecond=30;     // webSocket再接続試行までの待機秒数 
 
