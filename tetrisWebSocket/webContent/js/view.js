@@ -13,18 +13,35 @@
 var viewAction = function() {
 
 	var rivalCells = {};
+	var cells;
 
 	return {
 		socketOpen : function() {
 			console.log("openしたよー");
 		},
+		
+		setCells : function(myCells) {
+			cells = myCells;
+		}, 
 		/**
 		 * 画面盤のライバルのセルを、private変数に格納しておく
 		 */
-		setRivalCells : function(cells) {
-			rivalCells = cells;
+		setRivalCells : function(enemyCells) {
+			rivalCells = enemyCells;
 		},
 
+		update : function(event, data) {
+			var partsBefore = data.partsBefore;
+			var base = data.base;
+			//一個前の高さのを消して	
+			for (var i = -1; i < partsBefore.length; i++) {
+				offset = partsBefore[i] || 0;
+				cells[base + offset].style.backgroundColor = '';
+			}
+			
+			
+			
+		},
 		/**
 		 * websocketから通信を受領したら動くイベントハンドラ
 		 */
@@ -78,21 +95,15 @@ var viewAction = function() {
 	// webSocket接続試行.
 	tetris.websocket.open(viewAction.socketOpen,viewAction.retrieve, viewAction.close, viewAction.error);
 
+	var o = {}
+	$(o).on('updatePad', function (event,data) {
+		viewAction.update(event, data);
+	});
+
 	// ボタンをクリックしたら、tetrisを動かし始める
 	$('#gameStart').click(function() {
-		tetris.game.gameInitial();
+		var cells = tetris.game.gameInitial($(o));
+		viewAction.setCells(cells);
 	});
-	
-	
-// Sample for custom event (parameters)
-	// Create a plain object
-	var o = {}
-	// Bind an event handler
-	$(o).on('bump', function (event,data) {
-	  alert("data.color:" + data.color + ",  data.message:" + data.message);
-	})
-	// Trigger an event
-	//$(o).trigger('bump')
-	$(o).trigger('bump', {color: 'red', message: 'No!!!!'});
 });
  

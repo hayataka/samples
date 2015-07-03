@@ -36,6 +36,8 @@ tetris.game = function() {
 	var speed = tetris.config.s();
 	var blocks = tetris.config.blocks();
 
+	var viewHandle; // 
+	
 	//今すでに埋まっているものが  fills[i] = 'yellow' のような形で設定している
 	var fills = []; 		// 確定済みの、もう動か無いブロック類が保持されている変数
 
@@ -99,7 +101,7 @@ tetris.game = function() {
 			var wall     = "<td style='background-color:silver'></td>";
 			var tdNormal = "<td></td>";
 			var rowEnd   = "</tr>";
-
+			
 			// 条件分岐付きテンプレート		
 			var tpl ="<% if (leftWall) { %>" +
 						rowStart + wall + 
@@ -155,11 +157,13 @@ tetris.game = function() {
 		/**
 		 * げーむすたーとボタンを押した後に、最初に動く挙動を定義する.
 		 */
-		gameInitial : function() {
+		gameInitial : function(obj) {
 			block = blocks[Math.floor(Math.random() * blocks.length)];
 			// 操作しているユーザ側の 画面描画を実現するために、先に変数として格納。
 			cells = $('#playerGame td');
-			setTimeout(tetris.game.move, tetris.config.interval());			
+			setTimeout(tetris.game.move, tetris.config.interval());
+			viewHandle = obj;
+			return cells;
 		},
 
 		//TODO move関数長すぎ、１６０行以上ある
@@ -290,11 +294,17 @@ tetris.game = function() {
 			tetris.game.update();
 
 
-			//一個前の高さのを消して	
-			for (var i = -1; i < partsBefore.length; i++) {
-				offset = partsBefore[i] || 0;
-				cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
-			}
+//			//一個前の高さのを消して	
+//			for (var i = -1; i < partsBefore.length; i++) {
+//				offset = partsBefore[i] || 0;
+//				cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
+//			}
+
+			var eventData = {
+					base : topBefore * width + leftBefore,
+					partsBefore : partsBefore
+			};
+			viewHandle.trigger('updatePad', eventData);
 
 			//今の高さのに色を設定する
 			nows = []; //初期化し直し
