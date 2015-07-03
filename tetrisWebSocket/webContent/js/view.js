@@ -83,5 +83,16 @@ var viewAction = function() {
 		tetris.game.gameInitial();
 	});
 	
+	
+// Sample for custom event (parameters)
+	// Create a plain object
+	var o = {}
+	// Bind an event handler
+	$(o).on('bump', function (event,data) {
+	  alert("data.color:" + data.color + ",  data.message:" + data.message);
+	})
+	// Trigger an event
+	//$(o).trigger('bump')
+	$(o).trigger('bump', {color: 'red', message: 'No!!!!'});
 });
  
