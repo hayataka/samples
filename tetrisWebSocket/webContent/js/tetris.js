@@ -23,15 +23,12 @@ tetris.game = function() {
 	var height = tetris.config.h();
 	var left = Math.floor(width / 2); //画面の真ん中に初期配置
  	var leftBefore = left;
-
- 	var w = width; //省略記述用。
  	var angle = 0;
  	var angleBefore = angle;
  	var partsBefore = [];
  	var score = 0;
  	var scoreBefore = score;
  	var block = {};
- 	var cells = {};
 	var tick = 0;
 	var speed = tetris.config.s();
 	var blocks = tetris.config.blocks();
@@ -41,10 +38,7 @@ tetris.game = function() {
 	//今すでに埋まっているものが  fills[i] = 'yellow' のような形で設定している
 	var fills = []; 		// 確定済みの、もう動か無いブロック類が保持されている変数
 
-	// 操作中のもので、 nows[i] = 'yellow'のような形で設定している。 操作しているものは
-	// １blockなので、せいぜい４つ入っていて後はundefined扱いになっている
-	var nows = [];          // まだ操作中の、まだ動かせるブロック類が保持されている変数
-	
+
 
 // fills の概念が、「もう確定していて動かない項目」と定義しているのに対して、今操作中
 // オブジェクトを混ぜてしまうと、　自分自身とぶつかって動けなくなってしまうので
@@ -55,30 +49,259 @@ tetris.game = function() {
 	 * privateメソッドとして定義
 	 */
 	var	prepareMemory = function() {
-			var width = tetris.config.w();
-			var height = tetris.config.h();
+		var width = tetris.config.w();
+		var height = tetris.config.h();
+	
+		// 定数から動的算出系統
+		var lastRows = width * (height -1); 	
+		var z = _.range(0, width * height);	// このデータ構造（１次元配列）の数だけ生成
+		// 条件分岐付きテンプレート		
+		var tpl ="<% if (wall) { %>" +
+						"silver" +
+	             "<% } else { %>" +
+						"" +
+	            "<% }%>";
+		var compiled = _.template(tpl);
+		// config定義分、テンプレートに食わせて文字列を作成
+		var memory = _.map(z, function(num,index){
+			// 先に計算をしておいて、template時には結果のみ参照
+			var obj = {
+				 wall: index % width == 0 || index % width == width -1 || index >= lastRows
+			};
+			return compiled(obj);
+		});
+		fills = memory;
+		return memory;
+	};
 
-			// 定数から動的算出系統
-			var lastRows = width * (height -1); 	
-			var z = _.range(0, width * height);	// このデータ構造（１次元配列）の数だけ生成
-			// 条件分岐付きテンプレート		
-			var tpl ="<% if (wall) { %>" +
-							"silver" +
-		             "<% } else { %>" +
-							"" +
-		            "<% }%>";
-			var compiled = _.template(tpl);
-			// config定義分、テンプレートに食わせて文字列を作成
-			var memory = _.map(z, function(num,index){
-				// 先に計算をしておいて、template時には結果のみ参照
-				var obj = {
-					 wall: index % width == 0 || index % width == width -1 || index >= lastRows
-				};
-				return compiled(obj);
-			});
-			fills = memory;
-			return memory;
-		};
+	var isGameOver = function() {
+		return scoreBefore == score;
+	};
+
+	var gameOver = function(parts, offset) {
+
+		for (var i in fills) {
+			// 操作していたブロックは全て黒くする
+			if (fills[i]) {
+				fills[i] = 'black';
+			}
+		}
+	
+		viewHandle.trigger('updateFills', { fills : fills});
+		
+		if (tetris.websocket.can()) {
+			// このoffsetがないと最後のブロックの位置が、ブラウザと通信相手でずれる
+			var sendData = makeSendData(nowCells(parts, 'black', offset)); 
+			tetris.websocket.sendMessage("info:" + sendData);
+		}
+	};
+
+	var deleteBlocks = function() {
+
+		// 削除系処理
+		var cleans = 0;
+		for (var y = height - 2; y >= 0; y--) {
+			var filled = true;
+			for (var x = 1; x < width - 1; x++) {
+				if (!fills[y * width + x]) {
+					filled = false;
+					break;
+				}
+			}
+			if (filled) {
+				for (var y2 = y; y2 >= 0; y2--) {
+					for (var x = 1; x < width - 1; x++) {
+						fills[y2 * width + x] = fills[(y2 - 1) * width + x];
+					}
+				}
+				y++;
+				cleans++;
+	
+			}
+	
+		}
+		if (cleans > 0) {
+			score += Math.pow(10, cleans) * 10;
+			for (var y = height - 2; y >= 0; y--) {
+				for (var x = 1; x < width - 1; x++) {
+					var color = fills[y * width + x] || '';
+					fills[y * width + x] = color;
+				}
+	
+			}
+		}
+		
+	};
+
+	var positionShift = function() {
+
+		if (tick % speed == 0) {
+			top++;
+		} else {
+			if (keys.left) {
+				left--;
+			}
+			// 別イベント関数 onkeydownにて記録した情報を受け取る
+			if (keys.right) {
+				left++;
+			}
+	
+			if (keys.down) {
+				top++;
+			}
+	
+			if (tick % speed == 0) {
+				top++;
+			}
+	
+			if (keys.rotate) {
+				angle++;
+			}
+		}
+		
+	};
+
+	/**
+	 * すでに壁・block配置済みの場所に移動しようとしたので移動をキャンセルする
+	 */
+	var cancelMove = function() {
+		for (var j = -1; j < partsBefore.length; j++) {
+			var offset = partsBefore[j] || 0;
+			fills[topBefore * width + leftBefore + offset] = block.color;
+		}
+	};
+
+	var nowCells = function(parts, color, offset) {
+
+		var	nows =[];
+		if (offset) {
+			for (var i = -1; i < parts.length; i++) {
+				// gameover時の最後の移動でoffset修正
+				nows[top * width + left + offset] = color;
+			}
+		} else {
+			//今の高さのに色を設定する
+			for (var i = -1; i < parts.length; i++) {
+				offset = parts[i] || 0;
+				// 相手への通信のために、今の場所を保持しておく
+				nows[top * width + left + offset] = color;
+			}
+		}
+		return nows;
+		
+	};
+
+		
+	var	move = function() {
+		tick++;
+		leftBefore = left;
+		topBefore = top;
+		angleBefore = angle;
+
+		positionShift();	//キーイベントを変数に
+		keys = {}; 			// 初期化（次のイベントで拾えるようにする）
+
+		// 当たり判定処理　　パーツのどれかが、すでにblockがある位置にぶつかっていたら移動をキャンセルする
+		var parts = block.angles[angle % block.angles.length];
+		for (var i = -1; i < parts.length; i++) {
+			var offset = parts[i] || 0;
+
+			// 当たり判定でぶつかっていて
+			if (fills[top * width + left + offset]) {
+				//一定時間経過したら
+				if (tick % speed == 0) {
+
+					cancelMove();					// 移動をキャンセルさせて
+					if (isGameOver()) {
+						gameOver(parts, offset);
+						return;
+					}
+
+					deleteBlocks();					// 削除系処理
+
+					//　次のblockを出現させ、上から落とす
+					block = blocks[Math.floor(Math.random() * blocks.length)];
+					leftBefore = left = Math.floor(width / 2);
+					topBefore = top = 2;
+					angleBefore = angle = 0;
+					partsBefore = parts = block.angles[angle % block.angles.length];
+					scoreBefore = score;
+				} else {
+					//次のイベントタイミングまで保留
+					// 当たり判定でぶつかっていたので前の状態に戻す
+					left = leftBefore;
+					top = topBefore;
+					angle = angleBefore;
+					parts = partsBefore;
+
+				}
+
+				break; //　どこか１か所でもfills内にある＝あたり判定対象
+			}
+		}
+
+		if (top != topBefore) {
+			score++;
+		}
+
+
+		// ローカル画面の再描画　
+		viewHandle.trigger('updateFills', { fills : fills});
+		// 一つ前の情報を消すため
+		viewHandle.trigger('updatePad', {
+				base : topBefore * width + leftBefore,
+				parts : partsBefore,
+				color : ''					
+		});
+
+		//今の高さのに色を設定する(ための情報保持)
+		var nows = nowCells(parts, block.color);
+		viewHandle.trigger('updatePad', {
+				base : top * width + left,
+				parts : parts,
+				color : block.color
+		});
+		
+		
+		partsBefore = parts;	// 次のために、今を保持
+
+		var info = '経過：' + tick + '(' + left + ',' + top + ' score: ' + score + ')';
+		$('#info').html(info);
+
+
+		// 二人用で動いている時には、 相手に通知するために 送信する
+		if (tetris.websocket.can()) {
+			var sendData2 = makeSendData(nows);
+			tetris.websocket.sendMessage("info:" + sendData2);
+		}
+
+		setTimeout(move, tetris.config.interval());
+	};
+	
+	/**
+	 * 送信データ作成、圧縮
+	 * @param nows 操作中のブロックで、 nows[i] = 'yellow'のような形で設定している。 操作しているものは
+	 *             １blockなので、せいぜい４つ入っていて後はundefined扱いになっている
+	 */
+	var	makeSendData = function(nows) {
+			
+		// fills及びnowsの情報から、送信予定データを返却する
+		// deepCopy ・・・falseで、shallowCopyでもいい気がする			
+		var copyData = jQuery.extend(true, {}, fills);
+		for (var i = 0;i < nows.length;i++) {
+			// TODO ここってわざわざ幅*高さ分だけ回しちゃっているけど、せいぜい４項目なんだからピンポイントアクセスできないのかなぁ
+			if (nows[i]) {
+				copyData[i] = nows[i];
+			}
+		}
+		var jsonData = JSON.stringify(copyData);
+		//console.log("圧縮前：" + jsonData.length);   2500程度だと
+		var sendData = LZString.compressToEncodedURIComponent(jsonData);
+		//console.log("圧縮後：" + sendData.length);	  800程度に圧縮していた
+		// TODO 通信容量もっと減らしたい。そもそも変わってい無い箇所も送り直しているのが無駄
+		return sendData;
+	};
+
 
 	/**
 	 * publicメソッド.
@@ -160,200 +383,8 @@ tetris.game = function() {
 		gameInitial : function(obj) {
 			block = blocks[Math.floor(Math.random() * blocks.length)];
 			// 操作しているユーザ側の 画面描画を実現するために、先に変数として格納。
-			cells = $('#playerGame td');
-			setTimeout(tetris.game.move, tetris.config.interval());
+			setTimeout(move, tetris.config.interval());
 			viewHandle = obj;
-			return cells;
-		},
-
-		//TODO move関数長すぎ、１６０行以上ある
-		
-		move: function() {
-			tick++;
-			leftBefore = left;
-			topBefore = top;
-			angleBefore = angle;
-			
-	
-			if (tick % speed == 0) {
-				top++;
-			} else {
-				if (keys.left) {
-					left--;
-				}
-				// 別イベント関数 onkeydownにて記録した情報を受け取る
-				if (keys.right) {
-					left++;
-				}
-	
-				if (keys.down) {
-					top++;
-				}
-	
-				if (tick % speed == 0) {
-					top++;
-				}
-	
-				if (keys.rotate) {
-					angle++;
-				}
-			}
-	
-			keys = {}; // 初期化（次のイベントで拾えるようにする）
-	
-			// 当たり判定処理
-			var parts = block.angles[angle % block.angles.length];
-			for (var i = -1; i < parts.length; i++) {
-				var offset = parts[i] || 0;
-				if (fills[top * width + left + offset]) {
-	
-					if (tick % speed == 0) {
-						for (var j = -1; j < partsBefore.length; j++) {
-							offset = partsBefore[j] || 0;
-							fills[topBefore * width + leftBefore + offset] = block.color;
-						}
-						if (scoreBefore == score) {
-							for ( var d in fills) {
-								if (fills[d]) {
-									fills[d] = 'black';
-								}
-							}
-							tetris.game.update();
-
-							// このひとかたまりを後で関数にする。
-							nows =[];
-							for (var i = -1; i < parts.length; i++) {
-								nows[top * width + left + offset] = 'black';
-							}
-							if (tetris.websocket.can()) {
-								var sendData = tetris.game.makeSendData();				
-								tetris.websocket.sendMessage("info:" + sendData);
-							}
-							return;
-						}
-	
-						// 削除系処理
-						var cleans = 0;
-						for (var y = height - 2; y >= 0; y--) {
-							var filled = true;
-							for (var x = 1; x < width - 1; x++) {
-								if (!fills[y * width + x]) {
-									filled = false;
-									break;
-								}
-							}
-							if (filled) {
-								for (var y2 = y; y2 >= 0; y2--) {
-									for (var x = 1; x < width - 1; x++) {
-										fills[y2 * width + x] = fills[(y2 - 1) * width + x];
-									}
-								}
-								y++;
-								cleans++;
-	
-							}
-	
-						}
-						if (cleans > 0) {
-							score += Math.pow(10, cleans) * 10;
-							for (var y = height - 2; y >= 0; y--) {
-								for (var x = 1; x < width - 1; x++) {
-									var color = fills[y * width + x] || '';
-									fills[y * width + x] = color;
-								}
-	
-							}
-						}
-	
-						//　次のblockを出現させ、上から落とす
-						block = blocks[Math.floor(Math.random() * blocks.length)];
-						leftBefore = left = Math.floor(width / 2);
-						topBefore = top = 2;
-						angleBefore = angle = 0;
-						partsBefore = parts = block.angles[angle % block.angles.length];
-						scoreBefore = score;
-					} else {
-						//次のイベントタイミングまで保留
-						left = leftBefore;
-						top = topBefore;
-						angle = angleBefore;
-						parts = partsBefore;
-	
-					}
-	
-					break; //　どこか１か所でもfills内にある＝あたり判定対象
-				}
-			}
-	
-			if (top != topBefore) {
-				score++;
-			}
-
-
-			// ローカル画面の再描画　
-			tetris.game.update();
-
-
-//			//一個前の高さのを消して	
-//			for (var i = -1; i < partsBefore.length; i++) {
-//				offset = partsBefore[i] || 0;
-//				cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
-//			}
-
-			var eventData = {
-					base : topBefore * width + leftBefore,
-					partsBefore : partsBefore
-			};
-			viewHandle.trigger('updatePad', eventData);
-
-			//今の高さのに色を設定する
-			nows = []; //初期化し直し
-			for (var i = -1; i < parts.length; i++) {
-				offset = parts[i] || 0;
-				cells[top * width + left + offset].style.backgroundColor = block.color;
-				// 相手への通信のために、今の場所を保持しておく
-				nows[top * width + left + offset] = block.color;
-			}
-			
-			partsBefore = parts;			
-			
-	
-			var info = 'プログラム内の経過：' + tick + '(' + left + ',' + top
-					+ ' score: ' + score + ')';
-			document.getElementById('info').innerHTML = info;
-	
-			// 二人用で動いている時には、 相手に通知するために 送信する
-			if (tetris.websocket.can()) {
-				var sendData = tetris.game.makeSendData();				
-				tetris.websocket.sendMessage("info:" + sendData);
-			}
-
-			setTimeout(tetris.game.move, tetris.config.interval());
-		},
-		update: function() {
-			//確定物＝fills を使って、cellsの色を更新			
-			// 今動かしている最中の物については、move関数内で、cells及びnowsへ反映済み
-			for(var i = 0; i < fills.length; i++) {
-				cells[i].style.backgroundColor=fills[i];
-			}
-		},
-		makeSendData: function() {
-			
-			// fills及びnowsの情報から、送信予定データを返却する
-			// deepCopy ・・・falseで、shallowCopyでもいい気がする			
-			var copyData = jQuery.extend(true, {}, fills);
-			for (var i = 0;i < nows.length;i++) {
-				// TODO ここってわざわざ幅*高さ分だけ回しちゃっているけど、せいぜい４項目なんだからピンポイントアクセスできないのかなぁ
-				if (nows[i]) {
-					copyData[i] = nows[i];
-				}
-			}
-			var jsonData = JSON.stringify(copyData);
-			//console.log("圧縮前：" + jsonData.length);   2500程度だと
-			var sendData = LZString.compressToEncodedURIComponent(jsonData);
-			//console.log("圧縮後：" + sendData.length);	  800程度に圧縮していた
-			// TODO 通信容量もっと減らしたい。そもそも変わってい無い箇所も送り直しているのが無駄
-			return sendData;
 		}
     };
 }();

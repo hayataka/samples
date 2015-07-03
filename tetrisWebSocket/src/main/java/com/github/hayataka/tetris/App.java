@@ -60,6 +60,7 @@ public class App {
 		try {
 			server.start();
 			httpServer.start();
+			log.info("Settings.javaに記載のlocalhostの箇所を自身のIPアドレスに変えてから、ブラウザでのアクセスもそのIPにしてアクセスしてください.");
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
 				log.info("Please press a key to stop the server.");
 				reader.readLine();
