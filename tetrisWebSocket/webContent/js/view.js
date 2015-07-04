@@ -54,18 +54,41 @@ var viewAction = function() {
 		 */
 		retrieve : function(event) {
 			//console.log("messageを受け取ったよ");
-			var flgs = event.data.split(":");
-			var command = flgs[0];
-			var datas = flgs[1];
-			var dataString = LZString.decompressFromEncodedURIComponent(datas);
-			// console.log(test);
-			if (command=="info") {
-				//data 形式
+			
+			var obj = JSON.parse(event.data);			
+			
+//			var dataString = LZString.decompressFromEncodedURIComponent(datas);
+			if (obj.info) {
+				//data 形式   
 				//"{"0":"silver","1":"","2":"","3":"",「中略」,"250":"silver","251":"silver"}" こんな感じ
-				var obj = JSON.parse(dataString);
-				for (var i = 0; i< rivalCells.length; i++) {
-					rivalCells[i].style.backgroundColor = obj[i];
+				//    →　変更。今、色のある箇所のみにした
+
+
+
+
+				var colorMap = tetris.config.blockDecompress();
+				var pad = obj.info;
+				
+				var key;
+				for (key in cells) {
+					// 一回 相手セルは空にした後に色が来て来てたら塗り直す
+					if (rivalCells[key].style.backgroundColor != 'silver') {
+						rivalCells[key].style.backgroundColor = '';
+						if (pad[key]) {
+							rivalCells[key].style.backgroundColor = colorMap[pad[key]];
+						}
+					} else {
+						if (pad[key]) {
+							rivalCells[key].style.backgroundColor = colorMap[pad[key]];
+						}
+					}
+
 				}
+
+				// var key;
+				// for(key in pad) {
+				// 	rivalCells[key].style.backgroundColor = colorMap[pad[key]];
+				// }
 			}
 		},
 		close : function(event) {

@@ -92,7 +92,7 @@ tetris.game = function() {
 		if (tetris.websocket.can()) {
 			// このoffsetがないと最後のブロックの位置が、ブラウザと通信相手でずれる
 			var sendData = makeSendData(nowCells(parts, 'black', offset)); 
-			tetris.websocket.sendMessage("info:" + sendData);
+			tetris.websocket.sendMessage(sendData);
 		}
 	};
 
@@ -272,7 +272,7 @@ tetris.game = function() {
 		// 二人用で動いている時には、 相手に通知するために 送信する
 		if (tetris.websocket.can()) {
 			var sendData2 = makeSendData(nows);
-			tetris.websocket.sendMessage("info:" + sendData2);
+			tetris.websocket.sendMessage(sendData2);
 		}
 
 		setTimeout(move, tetris.config.interval());
@@ -287,19 +287,30 @@ tetris.game = function() {
 			
 		// fills及びnowsの情報から、送信予定データを返却する
 		// deepCopy ・・・falseで、shallowCopyでもいい気がする			
-		var copyData = jQuery.extend(true, {}, fills);
-		for (var i = 0;i < nows.length;i++) {
-			// TODO ここってわざわざ幅*高さ分だけ回しちゃっているけど、せいぜい４項目なんだからピンポイントアクセスできないのかなぁ
-			if (nows[i]) {
-				copyData[i] = nows[i];
+//		var copyData = jQuery.extend(true, {}, fills);
+		
+		// 少しでも転送を減らす
+		var copy = {};
+		for (var i = 0; i < fills.length; i++) {
+			if (fills[i] && fills[i] != '' && fills[i] != 'silver') {
+				copy[i] = fills[i].substring(0,1);
 			}
 		}
-		var jsonData = JSON.stringify(copyData);
-		//console.log("圧縮前：" + jsonData.length);   2500程度だと
-		var sendData = LZString.compressToEncodedURIComponent(jsonData);
-		//console.log("圧縮後：" + sendData.length);	  800程度に圧縮していた
-		// TODO 通信容量もっと減らしたい。そもそも変わってい無い箇所も送り直しているのが無駄
-		return sendData;
+		var key;
+		for(key in nows) {
+			copy[key] = nows[key].substring(0,1);
+		}
+		var wrapper = {};
+		wrapper.info = copy;
+		
+		var jsonData = JSON.stringify(wrapper);
+		// console.log("圧縮前：" + jsonData.length);
+		// var sendData = LZString.compressToEncodedURIComponent(jsonData);
+		// console.log("圧縮後：" + sendData.length);
+		
+		// なんの工夫もせずに全量送信した場合には、２５００→８００程度に圧縮されたが
+		// 転送量を減らした場合には  ３７→３８など　微増微減のため、圧縮しない
+		return jsonData;
 	};
 
 
