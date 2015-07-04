@@ -55,8 +55,25 @@ tetris.config = function() {
             return reConnectSecond;
         },
 
+        /**
+         * 通信圧縮から元の色名に戻すためのmap
+         */
+        blockDecompress : function() {
+            var bks = {
+                c: 'cyan',    
+                y: 'yellow',
+                g: 'green',
+                r: 'red',
+                a: 'aqua',
+                o: 'orange',
+                m: 'magenta',
+                s: 'silver',
+                b: 'black'
+            };
+            return bks;       
+        },
+
         // TODO いづれ、２次元配列及び、 sin cos tan 使って適宜の計算で形を作れるようにしたい
-        
         blocks: function() {
             var w = width;            
             // 角度を変えた時の情報を、先に計算した結果として保持しておく
@@ -82,7 +99,7 @@ tetris.config = function() {
 								[ -1, w, w + 1 ], [ -w, -1, w - 1 ] ]
 					},
 					{
-						color : 'blue',
+						color : 'aqua',
 						angles : [ [ -w - 1, -1, 1 ], [ -w, 1 - w, w ],
 								[ -1, 1, w + 1 ], [ -w, w - 1, w ] ]
 					},

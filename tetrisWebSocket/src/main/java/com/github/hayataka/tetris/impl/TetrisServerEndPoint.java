@@ -57,13 +57,15 @@ public class TetrisServerEndPoint {
 		if (size == 2) {
 			// 2人が接続した -> ゲーム準備ができた
 			// session.getOpenSessions() に対する処理と同等
-			((TyrusSession) session).broadcast(Tags.start + ":スタートボタンを押してゲームを開始してください");
+//			((TyrusSession) session).broadcast(Tags.start + ":スタートボタンを押してゲームを開始してください");
 		} else if (size > 2) {
 			// 3人目以降が接続した -> 未対応
-			session.getAsyncRemote().sendText(Tags.sorry + "ごめんのび太。このテトリスは二人用なんだ");
+//			session.getAsyncRemote().sendText(Tags.sorry + Tags.sepalator +  "ごめんのび太。このテトリスは二人用なんだ");
 		} else if (size < 2) {
 			// まだ１人目
-			session.getAsyncRemote().sendText(Tags.sorry + "他の人が来るまで待ってください");
+			final String Q = "\"";
+//FIXME jackson入れるなりしてjson返却対応する			
+//			session.getAsyncRemote().sendText("'{" + Q + Tags.sorry + Q + Tags.sepalator + Q + "他の人が来るまで待ってください" + Q + "}'");
 		}
 	}
 
@@ -77,15 +79,14 @@ public class TetrisServerEndPoint {
 	@OnMessage
 	public String onMessage(String message, Session session) {
 
-		// prepare
-		String[] msgs = message.split(Tags.sepalator);
-		if (msgs.length != 2) {
+		// prepare   //TODO jackson入れてパースするようにしたら考えなおす
+		String[] msgs = message.split(":");
+		if (msgs.length < 2) {
 			// 明示的な破棄
 			logger.warning("予定外のメッセージが来ています:" + message + ", sessionId:" + session.getId());
 			return message;
 		}
-		final String command = msgs[0];
-//		final String context = msgs[1];
+		final String command = msgs[0].replace("\"", "").replace("{", "");
 
 		// patterns 
 		// 本来は、EndPointそのものを分ける方が自然？　
