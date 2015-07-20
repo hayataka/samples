@@ -12,10 +12,9 @@
  * $(document).ready と等価
  */ 
  $(function() {
-	 var tetris =  new Tetris();
-	 tetris.config.blockDecompress();
-	 
-	 
+	
+//	t.config.blockDecompress();
+	
 	
 	// 初期描画として行うこと
 	// 盤面を設定に応じて作る

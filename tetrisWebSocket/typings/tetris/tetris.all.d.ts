@@ -6,7 +6,7 @@
  * tconf
  */
 
-declare class TetrisConfig {
+interface Config {
     /**
      * @return ゲーム盤面の幅（セル数）（当たり判定込み）を返却します。
      */
@@ -27,30 +27,53 @@ declare class TetrisConfig {
     /**
      * settimeout関数に渡す、再度move関数を呼び出すまでの時間を定義
      */
-    interval : number;
+    interval() : number;
     /**
      * webSocket再接続試行までの待機秒数 
      */
-    reConnect:number;
+    reConnect():number;
     /**
      * 通信圧縮から元の色名に戻すためのmap
      */
-    blockDecompress : any;
+    blockDecompress() : any;
 
-    blocks:any;
-    u:string;
+    blocks():any;
+    u():string;
     
 }
 
-declare class Tetris {
+interface Game {
+	/**
+	 * ゲーム盤面となるtrタグ、tdタグの文字列情報を返却する.
+	 * ゲーム開始ボタンを押す前までに、事前状況を作っておく
+	 * @return tr や tdタグを、configで設定した分の文字列情報
+	 */	   
+    preparePad() :any;
+	/**
+	 * keyboardイベントを変数に格納しておく.
+	 */    
+    keyboardEvent():any;
+    
+	/**
+	 * げーむすたーとボタンを押した後に、最初に動く挙動を定義する.
+	 */
+	gameInitial():any;
+}
+
+interface Tetris {
     /**
-     * 設定情報の返却
+     * 設定情報(主に定数）の返却
      */
-    config: TetrisConfig;
+    config: Config;
+    /**
+     * ゲームの挙動を司る処理
+     */
+    game: Game;
     
 }
 
-declare module "tetris" {
-    export = tetris;
-}
-declare var tetris:Tetris
+ declare module "tetris" {
+    export = t;
+
+ }
+ declare var t: Tetris;
