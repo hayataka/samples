@@ -1,7 +1,7 @@
 /// <reference path="../libs/lz-string.js" />
 /// <reference path="../../typings/jquery/jquery.d.ts" />
 /// <reference path="../../typings/underscore/underscore-1.7.0.d.ts" />
-/// <reference path="config.js" />
+/// <reference path="../../typings/tetris/tetris.all.d.ts" />
 /// <reference path="websocket.js" />
 /// <reference path="tetris.js" />
 /// <reference path="view.js" />
@@ -12,7 +12,11 @@
  * $(document).ready と等価
  */ 
  $(function() {
-
+	 var tetris =  new Tetris();
+	 tetris.config.blockDecompress();
+	 
+	 
+	
 	// 初期描画として行うこと
 	// 盤面を設定に応じて作る
 	var padData = tetris.game.preparePad();
