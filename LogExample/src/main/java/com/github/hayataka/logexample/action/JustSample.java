@@ -1,10 +1,17 @@
 package com.github.hayataka.logexample.action;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringJoiner;
 
+import org.aopalliance.intercept.MethodInvocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.hayataka.logexample.dto.SampleDto;
 
 import ch.qos.logback.classic.LoggerContext;
@@ -19,61 +26,69 @@ public class JustSample {
 
 	// TODO 変更したいポイント
 	private static final Logger log = LoggerFactory.getLogger(JustSample.class);
-		
-	public int add (int x, int y) {
-		
-		
-		
-		 LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-		  lc.setPackagingDataEnabled(true);
 
+	public int add(int x, int y) {
 
-		  
-		
-		log.debug("{} + {}", x , y);
-		
+		LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+		lc.setPackagingDataEnabled(true);
+
+		log.debug("{} + {}", x, y);
+
 		return x + y;
 	}
-	
+
 	public void test(SampleDto dto) {
-		
+
 		if (log.isDebugEnabled()) {
-//			log.debug(dto);  debugの１引数は文字列のみ
+			// log.debug(dto); debugの１引数は文字列のみ
 			log.debug(dto.toString());
 		}
 		// TODO 上記がNGな理由について
-		
-		
-		
-		
-		
-		
+
 		log.debug("出力する場合は通常はこうすること：{}", dto);
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
 	}
-	
+
+	// TODO interceptor系についての話
+	public void interceptor(MethodInvocation ic) {
+
+		// Object[] arguments = ic.getArguments();
+
+	}
+
+	private ObjectMapper mapper = new ObjectMapper();
+
+	public void interceptor(Object... args) {
+
+		if (log.isDebugEnabled()) {
+			StringJoiner sj = new StringJoiner(",");
+			if (args != null) {
+				for (Object arg : args) {
+					try {
+						sj.add(mapper.writeValueAsString(arg));
+					} catch (JsonProcessingException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}
+			log.debug("data:", sj);
+		}
+	}
+
 	public static void reloadLogger() {
-	    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-	    ContextInitializer ci = new ContextInitializer(loggerContext);
-	    URL url = ci.findURLOfDefaultConfigurationFile(true);
+		ContextInitializer ci = new ContextInitializer(loggerContext);
+		URL url = ci.findURLOfDefaultConfigurationFile(true);
 
-	    try {
-	        JoranConfigurator configurator = new JoranConfigurator();
-	        configurator.setContext(loggerContext);
-	        loggerContext.reset();
-	        configurator.doConfigure(url);
-	    } catch (JoranException je) {
-	        // StatusPrinter will handle this
-	    }
-	    StatusPrinter.printInCaseOfErrorsOrWarnings(loggerContext);
+		try {
+			JoranConfigurator configurator = new JoranConfigurator();
+			configurator.setContext(loggerContext);
+			loggerContext.reset();
+			configurator.doConfigure(url);
+		} catch (JoranException je) {
+			// StatusPrinter will handle this
+		}
+		StatusPrinter.printInCaseOfErrorsOrWarnings(loggerContext);
 	}
 }
