@@ -1,9 +1,6 @@
 package com.github.hayataka.logexample.action;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.StringJoiner;
 
 import org.aopalliance.intercept.MethodInvocation;
@@ -24,8 +21,11 @@ import lombok.Data;
 @Data
 public class JustSample {
 
-	// TODO 変更したいポイント
+	// TODO 変更したいポイント 下記及び、よりシンプルな方法は何か？
 	private static final Logger log = LoggerFactory.getLogger(JustSample.class);
+	private        final Logger log2 = LoggerFactory.getLogger(this.getClass());
+
+
 
 	public int add(int x, int y) {
 
@@ -41,11 +41,14 @@ public class JustSample {
 
 		if (log.isDebugEnabled()) {
 			// log.debug(dto); debugの１引数は文字列のみ
-			log.debug(dto.toString());
+			log.debug("データはこれ：{}", dto.toString());
 		}
 		// TODO 上記がNGな理由について
 
-		log.debug("出力する場合は通常はこうすること：{}", dto);
+
+		log.debug("データはこれ：{}", dto);
+
+
 
 	}
 

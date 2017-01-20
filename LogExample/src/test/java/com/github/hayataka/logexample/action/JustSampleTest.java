@@ -16,6 +16,9 @@ import com.github.hayataka.logexample.util.ToJsonUtil;
 
 public class JustSampleTest {
 
+	private static final Logger log = LoggerFactory.getLogger(JustSampleTest.class);
+
+
 	@Test
 	public void testAdd() {
 
@@ -38,7 +41,7 @@ public class JustSampleTest {
 
 	}
 
-	private Logger log = LoggerFactory.getLogger(JustSampleTest.class);
+
 
 	@Test
 	public void lombokTest() {
@@ -46,7 +49,7 @@ public class JustSampleTest {
 		LombokDto dto = new LombokDto();
 		dto.setId(15);
 		dto.setName("二郎");
-		dto.setBrithday(LocalDate.now());
+		dto.setBirthday(LocalDate.now());
 		dto.setPassword("passwordです");
 		log.debug("データは：{}", dto);
 	}
