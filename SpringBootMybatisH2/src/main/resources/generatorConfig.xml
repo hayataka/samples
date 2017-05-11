@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
+<generatorConfiguration>
+
+	<classPathEntry
+		location="/Users/xxx/.m2/repository/com/h2database/h2/1.4.194/h2-1.4.194.jar" />
+
+	<context id="context1" targetRuntime="MyBatis3">
+		<jdbcConnection driverClass="org.h2.Driver"
+			connectionURL="jdbc:h2:tcp://localhost/~/test" userId="sa" password="sa" />
+
+
+  <javaTypeResolver >
+      <property name="forceBigDecimals" value="false" />
+    </javaTypeResolver>
+		<javaModelGenerator targetPackage="com.example.model"
+			targetProject="src/main/java/" >
+			<property name="enableSubPackages" value="true"/>
+			</javaModelGenerator>
+		<sqlMapGenerator targetPackage="com.example.mapper"
+			targetProject="src/main/resources/" >
+			<property name="enableSubPackages" value="true"/>
+			</sqlMapGenerator>
+		<javaClientGenerator targetPackage="com.example.mapper"
+			targetProject="src/main/java/" type="XMLMAPPER" >
+			<property name="enableSubPackages" value="true"/>
+			</javaClientGenerator>
+		<table tableName="TB_%">
+		</table>
+	</context>
+</generatorConfiguration>
