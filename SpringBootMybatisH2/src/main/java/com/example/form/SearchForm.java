@@ -1,17 +1,16 @@
 package com.example.form;
 
 import java.io.Serializable;
-import java.util.List;
 
 import lombok.Data;
 
 @Data
-public class RootForm implements Serializable {
+public class SearchForm implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
 
-	private SearchForm searchForm;
-	
-	private List<ResultForm> list;
+	private int id;
+	private String name;
+	private String birthDay;
 }
