@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"></meta>
+<title>tymeleaf sample</title>
+</head>
+<body>
+
+	<div class="container">
+		<form role="form" th:object="${rootForm}">
+		
+			<div id="searchArea">
+				<div> <label for="searchId">id:</label><input type="text" id="searchId" th:field="*{searchForm.id}" value="test" /></div>
+				<div> <label for="searchName">名前：</label><input type="text" id="searchName" th:field="*{searchForm.name}" value="test名前" />		</div>	
+				<div> <label for="searchBirthDay">誕生日：</label><input type="text" id="searchBirthDay" th:field="*{searchForm.birthDay}"  />		</div>	
+			</div>
+		<div id="resultArea">
+
+
+		
+		</div>
+
+		</form>
+	</div>
+</body>
+</html>
