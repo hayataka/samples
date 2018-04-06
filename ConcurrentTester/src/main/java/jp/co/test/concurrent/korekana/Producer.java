@@ -17,7 +17,7 @@ public class Producer {
 		Producer me = new Producer();
 		me.start();
 	}
-	// TODO dbには、ステータス(char1と失敗回数intで定義すればいいんじゃないかな？
+	
 	void start() {
 
 		String stopFilePath = "./stopFile.txt";
@@ -45,7 +45,7 @@ public class Producer {
 			sleep(seconds);
 			
 			if (isStopCondition(stopFile)) {
-				// TODO 子スレッドへの終了を伝える
+				//  子スレッドへの終了を伝える
 			}
 		}
 
@@ -84,7 +84,7 @@ public class Producer {
 		try {
 			Thread.sleep(waitTime);
 		} catch (InterruptedException e) {
-			e.printStackTrace(); //TODO 挙動を確定させる事
+			e.printStackTrace(); // 挙動を確定させる事
 		}
 		
 	}

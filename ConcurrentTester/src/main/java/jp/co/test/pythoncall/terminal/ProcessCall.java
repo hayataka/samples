@@ -22,7 +22,7 @@ public class ProcessCall {
 
 		// memo この方法だと、pyに実行ビットを立てていないと、「ファイルが存在しない」メッセージが出力されるので注意
 		ProcessBuilder processBuilder = new ProcessBuilder(f.getAbsolutePath() + "/src/main/resources/echo.py");
-		// TODO pathはあとで調整する必要あり。jar実行
+		// pathはあとで調整する必要あり。jar実行
 		Process process = processBuilder.start();
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
